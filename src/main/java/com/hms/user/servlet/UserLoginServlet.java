@@ -13,29 +13,39 @@ import com.hms.dao.UserDAO;
 import com.hms.db.DBConnection;
 import com.hms.entity.User;
 
+/**
+ * User login servlet.
+ *
+ * <p>cr-java-0065 (HTTP Session State Storage): Session state is now backed by
+ * Amazon ElastiCache for Redis via Spring Session (see
+ * {@code com.hms.config.RedisSessionConfig} and the
+ * {@code springSessionRepositoryFilter} in {@code web.xml}).  The standard
+ * {@link HttpSession} API is preserved; Spring Session transparently
+ * serialises all session attributes to Redis, enabling stateless instances
+ * and horizontal scaling without server affinity.
+ */
 @WebServlet("/userLogin")
 public class UserLoginServlet extends HttpServlet {
 
 	@Override
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		
+
 		String email = req.getParameter("email");
 		String password = req.getParameter("password");
-		
+
+		// Spring Session transparently stores this session in Amazon ElastiCache for Redis
 		HttpSession session = req.getSession();
-		
+
 		UserDAO userDAO = new UserDAO(DBConnection.getConn());
 		User user = userDAO.loginUser(email, password);
-		
-		if (user!=null) {
-			session.setAttribute("userObj",user);
-			resp.sendRedirect("index.jsp"); 
-		}
-		else {
-			session.setAttribute("errorMsg","Invalid email or password");
-			resp.sendRedirect("user_login.jsp"); 
+
+		if (user != null) {
+			session.setAttribute("userObj", user);
+			resp.sendRedirect("index.jsp");
+		} else {
+			session.setAttribute("errorMsg", "Invalid email or password");
+			resp.sendRedirect("user_login.jsp");
 		}
 	}
-	
-	
+
 }

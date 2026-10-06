@@ -12,41 +12,47 @@ import javax.servlet.http.HttpSession;
 import com.hms.dao.AppointmentDAO;
 import com.hms.db.DBConnection;
 
+/**
+ * Update appointment status servlet.
+ *
+ * <p>cr-java-0065 (HTTP Session State Storage): Session state is now backed by
+ * Amazon ElastiCache for Redis via Spring Session (see
+ * {@code com.hms.config.RedisSessionConfig} and the
+ * {@code springSessionRepositoryFilter} in {@code web.xml}).  The standard
+ * {@link HttpSession} API is preserved; Spring Session transparently
+ * serialises all session attributes to Redis, enabling stateless instances
+ * and horizontal scaling without server affinity.
+ */
 @WebServlet("/updateStatus")
-public class UpdateStatus extends HttpServlet{
+public class UpdateStatus extends HttpServlet {
 
 	@Override
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		
+
 		try {
-			
-		 int 	id = Integer.parseInt(req.getParameter("id"));
-		 int 	doctorId = Integer.parseInt(req.getParameter("doctorId"));
-		 String comment = req.getParameter("comment");
-		 
-		 AppointmentDAO appDAO = new AppointmentDAO(DBConnection.getConn());
-		 boolean f = appDAO.updateDrAppointmentCommentStatus(id, doctorId, comment);
-		 
-		 HttpSession session = req.getSession();
-		 
-		 
-		 if(f == true) {
-			 session.setAttribute("successMsg", "Comment updated");
-			 resp.sendRedirect("doctor/patient.jsp");
-			 
-		 }else {
-			 
-			 session.setAttribute("errorMsg", "Something went wrong on server!");
-			 resp.sendRedirect("doctor/patient.jsp");
-			 
-		 }
-		 
-			
+
+			int id = Integer.parseInt(req.getParameter("id"));
+			int doctorId = Integer.parseInt(req.getParameter("doctorId"));
+			String comment = req.getParameter("comment");
+
+			AppointmentDAO appDAO = new AppointmentDAO(DBConnection.getConn());
+			boolean f = appDAO.updateDrAppointmentCommentStatus(id, doctorId, comment);
+
+			// Spring Session transparently stores this session in Amazon ElastiCache for Redis
+			HttpSession session = req.getSession();
+
+			if (f == true) {
+				session.setAttribute("successMsg", "Comment updated");
+				resp.sendRedirect("doctor/patient.jsp");
+
+			} else {
+				session.setAttribute("errorMsg", "Something went wrong on server!");
+				resp.sendRedirect("doctor/patient.jsp");
+			}
+
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 
-	
-	
 }

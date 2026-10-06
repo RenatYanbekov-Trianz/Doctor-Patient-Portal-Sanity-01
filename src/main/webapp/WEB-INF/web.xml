@@ -4,6 +4,55 @@
 
 <web-app>
   <display-name>Archetype Created Web Application</display-name>
+
+  <!--
+    cr-java-0065: HTTP Session State Storage
+    =========================================
+    Spring Session Data Redis integration for Amazon ElastiCache.
+
+    The ContextLoaderListener bootstraps the Spring ApplicationContext that
+    contains RedisSessionConfig (@EnableRedisHttpSession).  The
+    springSessionRepositoryFilter (registered via DelegatingFilterProxy)
+    intercepts every request and transparently replaces the standard
+    HttpSession with a Redis-backed session, enabling stateless application
+    instances and horizontal scaling without server affinity.
+
+    All existing servlet code continues to use the standard HttpSession API
+    (req.getSession(), session.setAttribute(), session.removeAttribute())
+    unchanged — Spring Session handles the Redis serialisation transparently.
+  -->
+
+  <!-- Spring ApplicationContext location -->
+  <context-param>
+    <param-name>contextClass</param-name>
+    <param-value>org.springframework.web.context.support.AnnotationConfigWebApplicationContext</param-value>
+  </context-param>
+  <context-param>
+    <param-name>contextConfigLocation</param-name>
+    <param-value>com.hms.config.RedisSessionConfig</param-value>
+  </context-param>
+
+  <!-- Bootstrap Spring ApplicationContext -->
+  <listener>
+    <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+  </listener>
+
+  <!--
+    Spring Session Repository Filter
+    Must be declared BEFORE any other filters and servlets so that every
+    request uses the Redis-backed HttpSession from the very beginning.
+  -->
+  <filter>
+    <filter-name>springSessionRepositoryFilter</filter-name>
+    <filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>
+  </filter>
+  <filter-mapping>
+    <filter-name>springSessionRepositoryFilter</filter-name>
+    <url-pattern>/*</url-pattern>
+    <dispatcher>REQUEST</dispatcher>
+    <dispatcher>ERROR</dispatcher>
+  </filter-mapping>
+
   <servlet>
   	<servlet-name>myuserServlet</servlet-name>
   	<display-name>myuserServlet</display-name>

@@ -11,6 +11,17 @@ import javax.servlet.http.HttpSession;
 
 import com.hms.entity.User;
 
+/**
+ * Admin login servlet.
+ *
+ * <p>cr-java-0065 (HTTP Session State Storage): Session state is now backed by
+ * Amazon ElastiCache for Redis via Spring Session (see
+ * {@code com.hms.config.RedisSessionConfig} and the
+ * {@code springSessionRepositoryFilter} in {@code web.xml}).  The standard
+ * {@link HttpSession} API is preserved; Spring Session transparently
+ * serialises all session attributes to Redis, enabling stateless instances
+ * and horizontal scaling without server affinity.
+ */
 @WebServlet("/adminLogin")
 public class AdminLoginServlet extends HttpServlet {
 
@@ -23,6 +34,7 @@ public class AdminLoginServlet extends HttpServlet {
 			String email = req.getParameter("email");
 			String password = req.getParameter("password");
 			
+			// Spring Session transparently stores this session in Amazon ElastiCache for Redis
 			HttpSession session = req.getSession();
 			
 			//logic for a static Admin

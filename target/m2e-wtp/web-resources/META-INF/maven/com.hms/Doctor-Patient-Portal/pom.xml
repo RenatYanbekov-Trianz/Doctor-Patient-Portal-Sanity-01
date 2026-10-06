@@ -2,10 +2,24 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.hms</groupId>
 	<artifactId>Doctor-Patient-Portal</artifactId>
-	<packaging>war</packaging>
+	<!-- cr-java-0107: Changed from 'war' to 'jar' for executable JAR with embedded Tomcat -->
+	<!-- Enables self-contained deployment on AWS ECS, EKS, or Fargate without external app server -->
+	<packaging>jar</packaging>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>Doctor-Patient-Portal Maven Webapp</name>
 	<url>http://maven.apache.org</url>
+	<properties>
+		<maven.compiler.source>1.8</maven.compiler.source>
+		<maven.compiler.target>1.8</maven.compiler.target>
+		<aws.sdk.version>1.12.470</aws.sdk.version>
+		<spring.session.version>2.7.4</spring.session.version>
+		<spring.data.redis.version>2.7.14</spring.data.redis.version>
+		<lettuce.version>6.2.6.RELEASE</lettuce.version>
+		<spring.web.version>5.3.29</spring.web.version>
+		<hikaricp.version>4.0.3</hikaricp.version>
+		<tomcat.version>9.0.76</tomcat.version>
+		<main.class>com.hms.EmbeddedTomcatLauncher</main.class>
+	</properties>
 	<dependencies>
 		<dependency>
 			<groupId>junit</groupId>
@@ -14,6 +28,7 @@
 			<scope>test</scope>
 		</dependency>
 
+		<!-- Servlet API provided by embedded Tomcat at runtime; compile scope for JSP/Servlet compilation -->
 		<dependency>
 			<groupId>javax.servlet</groupId>
 			<artifactId>javax.servlet-api</artifactId>
@@ -26,6 +41,14 @@
 			<groupId>mysql</groupId>
 			<artifactId>mysql-connector-java</artifactId>
 			<version>8.0.28</version>
+		</dependency>
+
+		<!-- HikariCP Connection Pool (cr-java-0073: Direct JDBC Connections)     -->
+		<!-- Combined with Amazon RDS Proxy for optimized cloud database access.  -->
+		<dependency>
+			<groupId>com.zaxxer</groupId>
+			<artifactId>HikariCP</artifactId>
+			<version>${hikaricp.version}</version>
 		</dependency>
 
 		<!-- https://mvnrepository.com/artifact/javax.servlet/jstl -->
@@ -42,14 +65,156 @@
 			<version>3.0.0</version>
 		</dependency>
 
+		<!-- AWS Secrets Manager SDK (cr-java-0113: Lack of Externalized Secrets) -->
+		<dependency>
+			<groupId>com.amazonaws</groupId>
+			<artifactId>aws-java-sdk-secretsmanager</artifactId>
+			<version>${aws.sdk.version}</version>
+		</dependency>
+
+		<!-- AWS SDK Core (required by aws-java-sdk-secretsmanager) -->
+		<dependency>
+			<groupId>com.amazonaws</groupId>
+			<artifactId>aws-java-sdk-core</artifactId>
+			<version>${aws.sdk.version}</version>
+		</dependency>
+
+		<!-- Jackson Databind for parsing JSON secrets from AWS Secrets Manager -->
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+			<version>2.15.2</version>
+		</dependency>
+
+		<!-- Jackson Core (transitive, pinned for consistency) -->
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-core</artifactId>
+			<version>2.15.2</version>
+		</dependency>
+
+		<!-- ============================================================ -->
+		<!-- cr-java-0065: HTTP Session State Storage                      -->
+		<!-- Spring Session Data Redis - distributed session via ElastiCache -->
+		<!-- ============================================================ -->
+
+		<!-- Spring Session Core -->
+		<dependency>
+			<groupId>org.springframework.session</groupId>
+			<artifactId>spring-session-core</artifactId>
+			<version>${spring.session.version}</version>
+		</dependency>
+
+		<!-- Spring Session Data Redis -->
+		<dependency>
+			<groupId>org.springframework.session</groupId>
+			<artifactId>spring-session-data-redis</artifactId>
+			<version>${spring.session.version}</version>
+		</dependency>
+
+		<!-- Spring Data Redis -->
+		<dependency>
+			<groupId>org.springframework.data</groupId>
+			<artifactId>spring-data-redis</artifactId>
+			<version>${spring.data.redis.version}</version>
+		</dependency>
+
+		<!-- Lettuce Redis client (used by Spring Data Redis) -->
+		<dependency>
+			<groupId>io.lettuce</groupId>
+			<artifactId>lettuce-core</artifactId>
+			<version>${lettuce.version}</version>
+		</dependency>
+
+		<!-- Spring Web (required for DelegatingFilterProxy and ApplicationContext) -->
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-web</artifactId>
+			<version>${spring.web.version}</version>
+		</dependency>
+
+		<!-- Spring Context (required for @Configuration, @Bean support) -->
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-context</artifactId>
+			<version>${spring.web.version}</version>
+		</dependency>
+
+		<!-- ============================================================ -->
+		<!-- cr-java-0107: WAR Packaging → Executable JAR with Embedded Tomcat -->
+		<!-- Embedded Tomcat replaces external application server dependency -->
+		<!-- Enables self-contained executable JAR for AWS ECS/EKS/Fargate  -->
+		<!-- ============================================================ -->
+
+		<!-- Embedded Tomcat (replaces external application server) -->
+		<dependency>
+			<groupId>org.apache.tomcat.embed</groupId>
+			<artifactId>tomcat-embed-core</artifactId>
+			<version>${tomcat.version}</version>
+		</dependency>
+
+		<!-- Embedded Tomcat Jasper (JSP support) -->
+		<dependency>
+			<groupId>org.apache.tomcat.embed</groupId>
+			<artifactId>tomcat-embed-jasper</artifactId>
+			<version>${tomcat.version}</version>
+		</dependency>
+
+		<!-- Embedded Tomcat EL (Expression Language for JSP) -->
+		<dependency>
+			<groupId>org.apache.tomcat.embed</groupId>
+			<artifactId>tomcat-embed-el</artifactId>
+			<version>${tomcat.version}</version>
+		</dependency>
 
 	</dependencies>
 	<build>
 		<plugins>
+			<!-- ============================================================ -->
+			<!-- cr-java-0107: WAR Packaging → Executable JAR                 -->
+			<!-- maven-jar-plugin: produces executable JAR with embedded Tomcat -->
+			<!-- Replaces maven-war-plugin for cloud-native JAR packaging      -->
+			<!-- ============================================================ -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-war-plugin</artifactId>
-				<version>3.3.1</version>
+				<artifactId>maven-jar-plugin</artifactId>
+				<version>3.3.0</version>
+				<configuration>
+					<archive>
+						<manifest>
+							<mainClass>${main.class}</mainClass>
+							<addClasspath>true</addClasspath>
+						</manifest>
+					</archive>
+				</configuration>
+			</plugin>
+
+			<!-- maven-assembly-plugin: bundles all dependencies into a single executable fat JAR -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<version>3.6.0</version>
+				<configuration>
+					<descriptorRefs>
+						<descriptorRef>jar-with-dependencies</descriptorRef>
+					</descriptorRefs>
+					<archive>
+						<manifest>
+							<mainClass>${main.class}</mainClass>
+						</manifest>
+					</archive>
+					<finalName>Doctor-Patient-Portal</finalName>
+					<appendAssemblyId>false</appendAssemblyId>
+				</configuration>
+				<executions>
+					<execution>
+						<id>make-assembly</id>
+						<phase>package</phase>
+						<goals>
+							<goal>single</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 		<finalName>Doctor-Patient-Portal</finalName>

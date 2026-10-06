@@ -14,7 +14,17 @@ import com.hms.dao.UserDAO;
 import com.hms.db.DBConnection;
 import com.hms.entity.Doctor;
 
-
+/**
+ * Doctor login servlet.
+ *
+ * <p>cr-java-0065 (HTTP Session State Storage): Session state is now backed by
+ * Amazon ElastiCache for Redis via Spring Session (see
+ * {@code com.hms.config.RedisSessionConfig} and the
+ * {@code springSessionRepositoryFilter} in {@code web.xml}).  The standard
+ * {@link HttpSession} API is preserved; Spring Session transparently
+ * serialises all session attributes to Redis, enabling stateless instances
+ * and horizontal scaling without server affinity.
+ */
 @WebServlet("/doctorLogin")
 public class DoctorLoginServlet extends HttpServlet {
 
@@ -25,7 +35,7 @@ public class DoctorLoginServlet extends HttpServlet {
 		String email = req.getParameter("email");
 		String password = req.getParameter("password");
 
-		//create session
+		// Spring Session transparently stores this session in Amazon ElastiCache for Redis
 		HttpSession session = req.getSession();
 
 		//create DB connection
