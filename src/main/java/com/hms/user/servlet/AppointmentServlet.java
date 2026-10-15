@@ -13,6 +13,14 @@ import com.hms.dao.AppointmentDAO;
 import com.hms.db.DBConnection;
 import com.hms.entity.Appointment;
 
+/**
+ * Add appointment servlet.
+ *
+ * Session management is handled by Spring Session with Amazon ElastiCache for Redis,
+ * enabling stateless application instances with centralized, distributed session
+ * management. The HttpSession API is preserved; Spring Session transparently
+ * redirects all session operations to Redis instead of in-memory storage.
+ */
 @WebServlet("/addAppointment")
 public class AppointmentServlet extends HttpServlet{
 
@@ -36,11 +44,12 @@ public class AppointmentServlet extends HttpServlet{
 	AppointmentDAO appointmentDAO = new AppointmentDAO(DBConnection.getConn());
 	boolean f = appointmentDAO.addAppointment(appointment);
 	
-	//get session
+	// Spring Session transparently stores this session in Amazon ElastiCache for Redis
 	HttpSession session = req.getSession();
 	
 	if(f==true) {
 		
+		// Success message stored in Redis-backed session - visible across all instances
 		session.setAttribute("successMsg", "Appointment is recorded Successfully.");
 		resp.sendRedirect("user_appointment.jsp");
 		
@@ -48,6 +57,7 @@ public class AppointmentServlet extends HttpServlet{
 	}
 	else {
 		
+		// Error message stored in Redis-backed session
 		session.setAttribute("errorMsg", "Something went wrong on server!");
 		resp.sendRedirect("user_appointment.jsp");
 		

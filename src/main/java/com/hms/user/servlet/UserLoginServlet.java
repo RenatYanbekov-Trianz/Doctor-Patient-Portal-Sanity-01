@@ -13,6 +13,14 @@ import com.hms.dao.UserDAO;
 import com.hms.db.DBConnection;
 import com.hms.entity.User;
 
+/**
+ * User login servlet.
+ *
+ * Session management is handled by Spring Session with Amazon ElastiCache for Redis,
+ * enabling stateless application instances with centralized, distributed session
+ * management. The HttpSession API is preserved; Spring Session transparently
+ * redirects all session operations to Redis instead of in-memory storage.
+ */
 @WebServlet("/userLogin")
 public class UserLoginServlet extends HttpServlet {
 
@@ -22,16 +30,19 @@ public class UserLoginServlet extends HttpServlet {
 		String email = req.getParameter("email");
 		String password = req.getParameter("password");
 		
+		// Spring Session transparently stores this session in Amazon ElastiCache for Redis
 		HttpSession session = req.getSession();
 		
 		UserDAO userDAO = new UserDAO(DBConnection.getConn());
 		User user = userDAO.loginUser(email, password);
 		
 		if (user!=null) {
+			// User object stored in Redis-backed session (ElastiCache) - supports horizontal scaling
 			session.setAttribute("userObj",user);
 			resp.sendRedirect("index.jsp"); 
 		}
 		else {
+			// Error message stored in Redis-backed session
 			session.setAttribute("errorMsg","Invalid email or password");
 			resp.sendRedirect("user_login.jsp"); 
 		}

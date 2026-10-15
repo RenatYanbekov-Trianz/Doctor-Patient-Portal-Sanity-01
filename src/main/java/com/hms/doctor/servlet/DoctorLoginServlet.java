@@ -10,11 +10,17 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import com.hms.dao.DoctorDAO;
-import com.hms.dao.UserDAO;
 import com.hms.db.DBConnection;
 import com.hms.entity.Doctor;
 
-
+/**
+ * Doctor login servlet.
+ *
+ * Session management is handled by Spring Session with Amazon ElastiCache for Redis,
+ * enabling stateless application instances with centralized, distributed session
+ * management. The HttpSession API is preserved; Spring Session transparently
+ * redirects all session operations to Redis instead of in-memory storage.
+ */
 @WebServlet("/doctorLogin")
 public class DoctorLoginServlet extends HttpServlet {
 
@@ -25,7 +31,7 @@ public class DoctorLoginServlet extends HttpServlet {
 		String email = req.getParameter("email");
 		String password = req.getParameter("password");
 
-		//create session
+		// Spring Session transparently stores this session in Amazon ElastiCache for Redis
 		HttpSession session = req.getSession();
 
 		//create DB connection
@@ -36,11 +42,12 @@ public class DoctorLoginServlet extends HttpServlet {
 
 		if (doctor != null) {
 			//means doctor is valid or exist
-			//then store particular logged in doctor object in session
+			//then store particular logged in doctor object in Redis-backed session (ElastiCache)
 			session.setAttribute("doctorObj", doctor);
 			//and redirect the particular doctor index page which is reside doctor folder
 			resp.sendRedirect("doctor/index.jsp");//doctor index means dashboard of doctors
 		} else {
+			// Error message stored in Redis-backed session
 			session.setAttribute("errorMsg", "Invalid email or password");
 			resp.sendRedirect("doctor_login.jsp");
 		}

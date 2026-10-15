@@ -13,6 +13,14 @@ import com.hms.dao.DoctorDAO;
 import com.hms.db.DBConnection;
 import com.hms.entity.Doctor;
 
+/**
+ * Doctor edit profile servlet.
+ *
+ * Session management is handled by Spring Session with Amazon ElastiCache for Redis,
+ * enabling stateless application instances with centralized, distributed session
+ * management. The HttpSession API is preserved; Spring Session transparently
+ * redirects all session operations to Redis instead of in-memory storage.
+ */
 @WebServlet("/doctorEditProfile")
 public class DoctorEditProfileServlet extends HttpServlet {
 
@@ -39,15 +47,19 @@ public class DoctorEditProfileServlet extends HttpServlet {
 
 			boolean f = docDAO.editDoctorProfile(doctor);
 
+			// Spring Session transparently stores this session in Amazon ElastiCache for Redis
 			HttpSession session = req.getSession();
 
 			if (f == true) {
 				Doctor updateDoctorObj = docDAO.getDoctorById(id);
+				// Success message stored in Redis-backed session - visible across all instances
 				session.setAttribute("successMsgForD", "Doctor update Successfully");
+				// Updated doctor object stored in Redis-backed session - consistent across all instances
 				session.setAttribute("doctorObj", updateDoctorObj); // over ride or update old session value to new updated doctor value.
 				resp.sendRedirect("doctor/edit_profile.jsp");
 
 			} else {
+				// Error message stored in Redis-backed session
 				session.setAttribute("errorMsgForD", "Something went wrong on server!");
 				resp.sendRedirect("doctor/edit_profile.jsp");
 			}

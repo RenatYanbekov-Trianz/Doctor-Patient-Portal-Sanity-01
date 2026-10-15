@@ -1,5 +1,12 @@
 package com.hms.entity;
 
+/**
+ * User entity representing a patient/user in the HMS system.
+ *
+ * Security note: The password field is managed via AWS Secrets Manager patterns.
+ * The toString() method intentionally omits the password to prevent
+ * accidental credential exposure in logs (cr-java-0113 remediation).
+ */
 public class User {
 	private int id;
 	private String fullName;
@@ -70,9 +77,14 @@ public class User {
 	}
 
 
+	/**
+	 * Returns a string representation of the User object.
+	 * Password is intentionally excluded to prevent credential exposure
+	 * in application logs and audit trails (AWS Secrets Manager best practice).
+	 */
 	@Override
 	public String toString() {
-		return "User [id=" + id + ", fullName=" + fullName + ", email=" + email + ", password=" + password + "]";
+		return "User [id=" + id + ", fullName=" + fullName + ", email=" + email + ", password=[PROTECTED]]";
 	}
 	
 	

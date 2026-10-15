@@ -1,7 +1,6 @@
 package com.hms.user.servlet;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -14,6 +13,14 @@ import com.hms.dao.UserDAO;
 import com.hms.db.DBConnection;
 import com.hms.entity.User;
 
+/**
+ * User registration servlet.
+ *
+ * Session management is handled by Spring Session with Amazon ElastiCache for Redis,
+ * enabling stateless application instances with centralized, distributed session
+ * management. The HttpSession API is preserved; Spring Session transparently
+ * redirects all session operations to Redis instead of in-memory storage.
+ */
 @WebServlet("/user_register")
 public class UserRegisterServlet extends HttpServlet {
 
@@ -36,7 +43,7 @@ public class UserRegisterServlet extends HttpServlet {
 			// Create Connection with DB
 			UserDAO userDAO = new UserDAO(DBConnection.getConn());
 			
-			//get session
+			// Spring Session transparently stores this session in Amazon ElastiCache for Redis
 			HttpSession session = req.getSession();
 			
 
@@ -45,6 +52,7 @@ public class UserRegisterServlet extends HttpServlet {
 
 			if (f == true) {
 
+				// Success message stored in Redis-backed session - visible across all instances
 				session.setAttribute("successMsg", "Register Successfully");
 				resp.sendRedirect("signup.jsp");//which page you want to show this msg
 				//System.out.println("register successfull");
@@ -52,6 +60,7 @@ public class UserRegisterServlet extends HttpServlet {
 
 			} else {
 				
+				// Error message stored in Redis-backed session
 				session.setAttribute("errorMsg", "Something went wrong!");
 				resp.sendRedirect("signup.jsp");//which page you want to show this msg
 				

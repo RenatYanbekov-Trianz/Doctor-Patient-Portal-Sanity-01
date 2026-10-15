@@ -2,10 +2,22 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.hms</groupId>
 	<artifactId>Doctor-Patient-Portal</artifactId>
-	<packaging>war</packaging>
+	<!-- cr-java-0107: Converted from WAR to executable JAR with embedded Tomcat
+	     for cloud-native deployment on Amazon ECS, EKS, or AWS Fargate. -->
+	<packaging>jar</packaging>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>Doctor-Patient-Portal Maven Webapp</name>
 	<url>http://maven.apache.org</url>
+	<properties>
+		<maven.compiler.source>1.8</maven.compiler.source>
+		<maven.compiler.target>1.8</maven.compiler.target>
+		<tomcat.version>9.0.85</tomcat.version>
+		<hikaricp.version>5.1.0</hikaricp.version>
+		<spring.session.version>2.7.4</spring.session.version>
+		<spring.data.redis.version>2.7.18</spring.data.redis.version>
+		<lettuce.version>6.2.7.RELEASE</lettuce.version>
+		<aws.sdk.version>2.21.29</aws.sdk.version>
+	</properties>
 	<dependencies>
 		<dependency>
 			<groupId>junit</groupId>
@@ -14,6 +26,7 @@
 			<scope>test</scope>
 		</dependency>
 
+		<!-- Servlet API – provided by embedded Tomcat at runtime -->
 		<dependency>
 			<groupId>javax.servlet</groupId>
 			<artifactId>javax.servlet-api</artifactId>
@@ -21,35 +34,137 @@
 			<scope>provided</scope>
 		</dependency>
 
-		<!-- https://mvnrepository.com/artifact/mysql/mysql-connector-java -->
+		<!-- MySQL JDBC driver -->
 		<dependency>
 			<groupId>mysql</groupId>
 			<artifactId>mysql-connector-java</artifactId>
 			<version>8.0.28</version>
 		</dependency>
 
-		<!-- https://mvnrepository.com/artifact/javax.servlet/jstl -->
+		<!-- JSTL -->
 		<dependency>
 			<groupId>javax.servlet</groupId>
 			<artifactId>jstl</artifactId>
 			<version>1.2</version>
 		</dependency>
 
-		<!-- https://mvnrepository.com/artifact/javax.el/javax.el-api -->
+		<!-- EL API -->
 		<dependency>
 			<groupId>javax.el</groupId>
 			<artifactId>javax.el-api</artifactId>
 			<version>3.0.0</version>
 		</dependency>
 
+		<!-- ============================================================
+		     cr-java-0073 / cr-java-0097: HikariCP connection pool
+		     Replaces raw JDBC DriverManager with a production-grade
+		     connection pool with configurable timeouts for cloud resilience.
+		     ============================================================ -->
+		<dependency>
+			<groupId>com.zaxxer</groupId>
+			<artifactId>HikariCP</artifactId>
+			<version>${hikaricp.version}</version>
+		</dependency>
+
+		<!-- ============================================================
+		     cr-java-0065: Spring Session with Amazon ElastiCache for Redis
+		     Replaces in-process HTTP session storage with a distributed
+		     Redis-backed session store, enabling stateless instances and
+		     horizontal scaling.
+		     ============================================================ -->
+		<dependency>
+			<groupId>org.springframework.session</groupId>
+			<artifactId>spring-session-data-redis</artifactId>
+			<version>${spring.session.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.data</groupId>
+			<artifactId>spring-data-redis</artifactId>
+			<version>${spring.data.redis.version}</version>
+		</dependency>
+		<!-- Lettuce Redis client (used by Spring Data Redis) -->
+		<dependency>
+			<groupId>io.lettuce</groupId>
+			<artifactId>lettuce-core</artifactId>
+			<version>${lettuce.version}</version>
+		</dependency>
+
+		<!-- ============================================================
+		     cr-java-0113: AWS Secrets Manager SDK
+		     Enables retrieval of credentials and secrets from AWS Secrets
+		     Manager at runtime, eliminating hardcoded secrets in source code.
+		     ============================================================ -->
+		<dependency>
+			<groupId>software.amazon.awssdk</groupId>
+			<artifactId>secretsmanager</artifactId>
+			<version>${aws.sdk.version}</version>
+		</dependency>
+
+		<!-- ============================================================
+		     cr-java-0107: Embedded Apache Tomcat
+		     Converts the application from WAR (requiring an external
+		     application server) to a self-contained executable JAR with
+		     an embedded servlet container, enabling deployment on
+		     Amazon ECS, EKS, or AWS Fargate without external app servers.
+		     ============================================================ -->
+		<dependency>
+			<groupId>org.apache.tomcat.embed</groupId>
+			<artifactId>tomcat-embed-core</artifactId>
+			<version>${tomcat.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.tomcat.embed</groupId>
+			<artifactId>tomcat-embed-jasper</artifactId>
+			<version>${tomcat.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.tomcat.embed</groupId>
+			<artifactId>tomcat-embed-el</artifactId>
+			<version>${tomcat.version}</version>
+		</dependency>
 
 	</dependencies>
 	<build>
 		<plugins>
+			<!-- cr-java-0107: Use maven-jar-plugin to produce an executable JAR
+			     instead of maven-war-plugin, enabling self-contained deployment. -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-war-plugin</artifactId>
-				<version>3.3.1</version>
+				<artifactId>maven-jar-plugin</artifactId>
+				<version>3.3.0</version>
+				<configuration>
+					<archive>
+						<manifest>
+							<mainClass>com.hms.Main</mainClass>
+							<addClasspath>true</addClasspath>
+						</manifest>
+					</archive>
+				</configuration>
+			</plugin>
+			<!-- Assembly plugin to bundle all dependencies into a fat/uber JAR -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<version>3.6.0</version>
+				<configuration>
+					<descriptorRefs>
+						<descriptorRef>jar-with-dependencies</descriptorRef>
+					</descriptorRefs>
+					<archive>
+						<manifest>
+							<mainClass>com.hms.Main</mainClass>
+						</manifest>
+					</archive>
+				</configuration>
+				<executions>
+					<execution>
+						<id>make-assembly</id>
+						<phase>package</phase>
+						<goals>
+							<goal>single</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 		<finalName>Doctor-Patient-Portal</finalName>

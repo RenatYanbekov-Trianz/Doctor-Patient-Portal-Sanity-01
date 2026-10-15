@@ -6,11 +6,15 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
-//import javax.security.auth.message.callback.PrivateKeyCallback.Request;
-import javax.servlet.http.HttpSession;
-
 import com.hms.entity.Doctor;
 
+/**
+ * Data Access Object for Doctor entity.
+ *
+ * The unused HttpSession import has been removed as part of the Spring Session
+ * Redis migration (cr-java-0065). Session management is now handled at the
+ * servlet layer via Spring Session with Amazon ElastiCache for Redis.
+ */
 public class DoctorDAO {
 
 	private Connection conn;
