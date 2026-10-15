@@ -1,11 +1,5 @@
 
-
-
-<!-- for jstl tag -->
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
-<!-- end of jstl tag -->
-
-<%@page isELIgnored="false"%>
+<%@ taglib prefix="c" uri="jakarta.tags.core"%>
 
 
 <nav class="navbar navbar-expand-lg navbar-dark bg-success">
