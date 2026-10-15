@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Portal: Doctor-Patient-Portal - Java 21 / Jakarta EE 10 - Compilation clean (0 errors) -->
+<!-- Portal: Doctor-Patient-Portal - Java 17 / Jakarta EE 10 - Compilation clean (0 errors) -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
@@ -11,15 +11,15 @@
 	<url>http://maven.apache.org</url>
 
 	<properties>
-		<maven.compiler.source>21</maven.compiler.source>
-		<maven.compiler.target>21</maven.compiler.target>
-		<java.version>21</java.version>
+		<maven.compiler.source>17</maven.compiler.source>
+		<maven.compiler.target>17</maven.compiler.target>
+		<java.version>17</java.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 
 	<dependencies>
 
-		<!-- JUnit 5 for Java 21 compatibility (replaces outdated JUnit 3.8.1 / JUnit 4) -->
+		<!-- JUnit 5 for Java 17 compatibility -->
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter</artifactId>
@@ -27,7 +27,23 @@
 			<scope>test</scope>
 		</dependency>
 
-		<!-- Jakarta Servlet API 6.0 (replaces javax.servlet-api for Jakarta EE 10 / Java 21) -->
+		<!-- Mockito for mocking in unit tests -->
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-core</artifactId>
+			<version>5.5.0</version>
+			<scope>test</scope>
+		</dependency>
+
+		<!-- Mockito JUnit 5 extension -->
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-junit-jupiter</artifactId>
+			<version>5.5.0</version>
+			<scope>test</scope>
+		</dependency>
+
+		<!-- Jakarta Servlet API 6.0 (replaces javax.servlet-api for Jakarta EE 10) -->
 		<dependency>
 			<groupId>jakarta.servlet</groupId>
 			<artifactId>jakarta.servlet-api</artifactId>
@@ -35,16 +51,14 @@
 			<scope>provided</scope>
 		</dependency>
 
-		<!-- MySQL Connector/J updated groupId and version for Java 21 compatibility -->
-		<!-- Old: mysql:mysql-connector-java:8.0.33 -->
-		<!-- New: com.mysql:mysql-connector-j:8.3.0 -->
+		<!-- MySQL Connector/J -->
 		<dependency>
 			<groupId>com.mysql</groupId>
 			<artifactId>mysql-connector-j</artifactId>
 			<version>8.3.0</version>
 		</dependency>
 
-		<!-- Jakarta JSTL API (replaces javax.servlet:jstl) -->
+		<!-- Jakarta JSTL API -->
 		<dependency>
 			<groupId>jakarta.servlet.jsp.jstl</groupId>
 			<artifactId>jakarta.servlet.jsp.jstl-api</artifactId>
@@ -58,7 +72,7 @@
 			<version>3.0.1</version>
 		</dependency>
 
-		<!-- Jakarta EL API (replaces javax.el:javax.el-api) -->
+		<!-- Jakarta EL API -->
 		<dependency>
 			<groupId>jakarta.el</groupId>
 			<artifactId>jakarta.el-api</artifactId>
@@ -70,15 +84,15 @@
 
 	<build>
 		<plugins>
-			<!-- Maven Compiler Plugin 3.11.0 with explicit Java 21 release flag -->
+			<!-- Maven Compiler Plugin with Java 17 -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.11.0</version>
 				<configuration>
-					<source>21</source>
-					<target>21</target>
-					<release>21</release>
+					<source>17</source>
+					<target>17</target>
+					<release>17</release>
 					<encoding>UTF-8</encoding>
 				</configuration>
 			</plugin>
@@ -97,6 +111,25 @@
 				<configuration>
 					<useModulePath>false</useModulePath>
 				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<version>0.8.11</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>prepare-agent</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>report</id>
+						<phase>test</phase>
+						<goals>
+							<goal>report</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 		<finalName>Doctor-Patient-Portal</finalName>
